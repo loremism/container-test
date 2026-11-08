@@ -1,0 +1,35 @@
+name: Test Docker va Podman
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:   # cho phép bấm chạy tay
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [docker, podman]
+    steps:
+      - name: Lay code
+        uses: actions/checkout@v4
+
+      - name: Cai Podman neu thieu
+        if: matrix.engine == 'podman'
+        run: |
+          if ! command -v podman >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y podman
+          fi
+
+      - name: Xem phien ban
+        run: ${{ matrix.engine }} --version
+
+      - name: Build image
+        run: ${{ matrix.engine }} build -t myapp:test .
+
+      - name: Chay container
+        run: ${{ matrix.engine }} run --rm myapp:test
